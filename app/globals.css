@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #F5F6F7;
+  --foreground: #1F2933;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.dark-sidebar {
+  background-color: #0B0B0B;
+  color: white;
+}
+
+.neon-button {
+  background-color: #9EFF00;
+  color: #0B0B0B;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.neon-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
