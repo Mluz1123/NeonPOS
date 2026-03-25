@@ -50,8 +50,18 @@ export interface CashRegister {
 export interface InventoryMovement {
   id: string;
   product_id: string;
+  product?: Product;
   type: 'sale' | 'purchase' | 'adjustment' | 'loss';
   quantity: number;
+  reason?: string;
+  created_at: string;
+}
+
+export interface CashMovement {
+  id: string;
+  cash_register_id: string;
+  type: 'income' | 'expense';
+  amount: number;
   reason?: string;
   created_at: string;
 }

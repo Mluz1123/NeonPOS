@@ -1,20 +1,51 @@
 'use client';
 
-import { Search, Grid, Package, Plus } from 'lucide-react';
-import { Product } from '@/types';
+import { Search, Grid, Package, Plus, Loader2 } from 'lucide-react';
+import { Product, Category } from '@/types';
 import { usePOSStore } from '@/stores/usePOSStore';
-
-const MOCK_PRODUCTS: Product[] = [
-  { id: '1', name: 'Cerveza Corona 355ml', sale_price: 35, category_id: '1', stock_actual: 100, stock_min: 10, is_active: true, purchase_price: 20 },
-  { id: '2', name: 'Coca Cola 600ml', sale_price: 18, category_id: '2', stock_actual: 50, stock_min: 5, is_active: true, purchase_price: 12 },
-  { id: '3', name: 'Papas Sabritas Sal', sale_price: 15, category_id: '3', stock_actual: 30, stock_min: 5, is_active: true, purchase_price: 10 },
-  { id: '4', name: 'Whisky Johnnie Walker Black', sale_price: 850, category_id: '1', stock_actual: 12, stock_min: 2, is_active: true, purchase_price: 600 },
-  { id: '5', name: 'Agua Ciel 1L', sale_price: 12, category_id: '2', stock_actual: 80, stock_min: 10, is_active: true, purchase_price: 6 },
-  { id: '6', name: 'Nachos con Queso', sale_price: 45, category_id: '3', stock_actual: 20, stock_min: 5, is_active: true, purchase_price: 25 },
-];
+import { cn } from '@/lib/utils';
+import { useEffect, useState, useTransition } from 'react';
+import { getProducts } from '@/app/actions/products';
+import { getCategories } from '@/app/actions/categories';
 
 export function ProductGrid() {
   const { addToCart } = usePOSStore();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    async function fetchData() {
+      const [{ data: productsData }, { data: categoriesData }] = await Promise.all([
+        getProducts(),
+        getCategories()
+      ]);
+      
+      if (productsData) setProducts(productsData);
+      if (categoriesData) setCategories(categoriesData);
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
+                          p.barcode?.includes(search);
+    const matchesCategory = selectedCategory === 'Todos' || 
+                            p.category?.name === selectedCategory;
+    return matchesSearch && matchesCategory && p.is_active;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -24,6 +55,8 @@ export function ProductGrid() {
           <input
             type="text"
             placeholder="Buscar producto o escanear código..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-12 pr-4 py-4 bg-white rounded-2xl border border-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
           />
         </div>
@@ -32,31 +65,57 @@ export function ProductGrid() {
         </button>
       </div>
 
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {['Todos', 'Bebidas', 'Snacks', 'Licores', 'Abarrotes'].map((cat) => (
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+        <button
+          onClick={() => setSelectedCategory('Todos')}
+          className={`px-6 py-2 rounded-xl border transition-all whitespace-nowrap text-sm font-semibold ${
+            selectedCategory === 'Todos' 
+              ? 'bg-primary text-background-dark border-primary' 
+              : 'bg-white border-gray-100 text-text-secondary hover:border-primary'
+          }`}
+        >
+          Todos
+        </button>
+        {categories.map((cat) => (
           <button
-            key={cat}
-            className="px-6 py-2 rounded-xl bg-white border border-gray-100 text-sm font-semibold hover:border-primary transition-all whitespace-nowrap"
+            key={cat.id}
+            onClick={() => setSelectedCategory(cat.name)}
+            className={`px-6 py-2 rounded-xl border transition-all whitespace-nowrap text-sm font-semibold ${
+              selectedCategory === cat.name 
+                ? 'bg-primary text-background-dark border-primary' 
+                : 'bg-white border-gray-100 text-text-secondary hover:border-primary'
+            }`}
           >
-            {cat}
+            {cat.name}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pr-2">
-        {MOCK_PRODUCTS.map((product) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pr-2 custom-scrollbar">
+        {filteredProducts.map((product) => (
           <button
             key={product.id}
             onClick={() => addToCart(product)}
-            className="flex flex-col bg-white p-4 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary transition-all text-left group"
+            disabled={product.stock_actual <= 0}
+            className={`flex flex-col bg-white p-4 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary transition-all text-left group relative ${
+              product.stock_actual <= 0 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             <div className="w-full aspect-square bg-gray-50 rounded-2xl mb-4 flex items-center justify-center group-hover:bg-primary/5 transition-colors">
-              <Package className="w-12 h-12 text-gray-200 group-hover:text-primary/40" />
+              <Package className={cn("w-12 h-12 text-gray-200 group-hover:text-primary/40", product.stock_actual <= 0 && "text-red-200")} />
             </div>
+            {product.stock_actual <= 0 && (
+              <span className="absolute top-6 left-6 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-lg uppercase">Agotado</span>
+            )}
             <p className="font-bold text-text-main line-clamp-2 mb-1">{product.name}</p>
-            <p className="text-primary-dark font-black text-lg mt-auto">${product.sale_price.toFixed(2)}</p>
+            <p className="text-primary-dark font-black text-lg mt-auto">${Number(product.sale_price).toFixed(2)}</p>
             <div className="mt-2 flex justify-between items-center">
-              <span className="text-[10px] text-gray-400 uppercase font-bold">Stock: {product.stock_actual}</span>
+              <span className={cn(
+                "text-[10px] uppercase font-bold",
+                product.stock_actual <= product.stock_min ? "text-red-500" : "text-gray-400"
+              )}>
+                Stock: {product.stock_actual}
+              </span>
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Plus className="w-4 h-4 text-primary" />
               </div>
@@ -64,6 +123,13 @@ export function ProductGrid() {
           </button>
         ))}
       </div>
+      
+      {filteredProducts.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+          <Package className="w-16 h-16 mb-4 opacity-10" />
+          <p className="text-lg font-medium">No se encontraron productos</p>
+        </div>
+      )}
     </div>
   );
 }

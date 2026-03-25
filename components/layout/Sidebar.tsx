@@ -49,10 +49,15 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 mt-auto border-t border-white/10">
-        <button className="flex items-center gap-3 px-4 py-3 w-full text-gray-400 hover:text-red-400 transition-colors">
-          <LogOut className="w-5 h-5" />
-          Cerrar Sesión
-        </button>
+        <form action="/auth/signout" method="post">
+          <button 
+            type="submit"
+            className="flex items-center gap-3 px-4 py-3 w-full text-gray-400 hover:text-red-400 transition-colors group"
+          >
+            <LogOut className="w-5 h-5 group-hover:text-red-400" />
+            Cerrar Sesión
+          </button>
+        </form>
       </div>
     </div>
   );
