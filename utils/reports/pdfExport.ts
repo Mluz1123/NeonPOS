@@ -69,7 +69,9 @@ export async function exportReportToPDF(data: ReportData) {
     body: data.recentSales.slice(0, 50).map(s => [
       s.id.split('-')[0].toUpperCase(),
       format(new Date(s.created_at), 'dd/MM/yy HH:mm'),
-      s.payment_method.toUpperCase(),
+      s.payment_method === 'cash' ? 'EFECTIVO' : 
+      s.payment_method === 'card' ? 'TARJETA' : 
+      'TRANSFERENCIA',
       s.items.length,
       `$${Number(s.total_amount).toFixed(2)}`
     ]),

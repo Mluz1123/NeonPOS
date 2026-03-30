@@ -1,20 +1,24 @@
 'use client';
 
-import { Settings, User, Bell, Shield, Database, Palette, HelpCircle, ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import { Settings, User, Bell, Shield, Database, Palette, HelpCircle, ArrowLeft, Percent, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { ProfileSection } from '@/components/settings/ProfileSection';
 import { AppearanceSection } from '@/components/settings/AppearanceSection';
 import { NotificationsSection } from '@/components/settings/NotificationsSection';
 import { SecuritySection } from '@/components/settings/SecuritySection';
+import { TaxesSection } from '@/components/settings/TaxesSection';
 import { ComingSoon } from '@/components/settings/ComingSoon';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { RequirePermission } from '@/components/auth/RequirePermission';
 
 const settingsSections = [
-  { id: 'profile', icon: User, label: 'Perfil y Cuenta', description: 'Gestiona la información de tu negocio y ticket.' },
+  { id: 'profile', icon: User, label: 'Perfil y Cuenta', description: 'Gestiona la información de tu negocio y ticket.', permission: 'manage_settings' },
+  { id: 'taxes', icon: Percent, label: 'Impuestos', description: 'IVA, Impoconsumo y porcentajes globales.', permission: 'manage_settings' },
   { id: 'appearance', icon: Palette, label: 'Apariencia', description: 'Personaliza los colores y el tema del sistema.' },
-  { id: 'notifications', icon: Bell, label: 'Notificaciones', description: 'Configura alertas de stock y cierres de caja.' },
-  { id: 'security', icon: Shield, label: 'Seguridad', description: 'Roles de usuario y permisos del sistema.' },
-  { id: 'database', icon: Database, label: 'Base de Datos', description: 'Exportar respaldos y limpiar historial.' },
+  { id: 'notifications', icon: Bell, label: 'Notificaciones', description: 'Configura alertas de stock y cierres de caja.', permission: 'manage_settings' },
+  { id: 'security', icon: Shield, label: 'Seguridad', description: 'Roles de usuario y permisos del sistema.', permission: 'manage_settings' },
+  { id: 'database', icon: Database, label: 'Base de Datos', description: 'Exportar respaldos y limpiar historial.', permission: 'manage_settings' },
   { id: 'support', icon: HelpCircle, label: 'Soporte', description: 'Centro de ayuda y documentación técnica.' },
 ];
 
@@ -33,30 +37,44 @@ export default function SettingsPage() {
         return <NotificationsSection />;
       case 'security':
         return <SecuritySection />;
+      case 'taxes':
+        return <TaxesSectionWrapper />;
       case null:
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {settingsSections.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className="flex items-center gap-6 p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:border-primary hover:shadow-xl transition-all text-left group hover:-translate-y-1"
-              >
-                <div className="p-4 bg-gray-50 rounded-2xl group-hover:bg-primary/10 transition-colors">
-                  <section.icon className={cn(
-                    "w-6 h-6 transition-colors",
-                    activeSection === section.id ? "text-primary" : "text-gray-400 group-hover:text-primary"
-                  )} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-text-main text-lg">{section.label}</h3>
-                  <p className="text-text-secondary text-sm font-medium">{section.description}</p>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-primary/20 group-hover:text-primary transition-all">
-                  →
-                </div>
-              </button>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+            {settingsSections.map((section) => {
+              const button = (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveSection(section.id)}
+                  className="flex items-center gap-6 p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:border-primary hover:shadow-xl transition-all text-left group hover:-translate-y-1 w-full"
+                >
+                  <div className="p-4 bg-gray-50 rounded-2xl group-hover:bg-primary/10 transition-colors">
+                    <section.icon className={cn(
+                      "w-6 h-6 transition-colors",
+                      activeSection === section.id ? "text-primary" : "text-gray-400 group-hover:text-primary"
+                    )} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-text-main text-lg">{section.label}</h3>
+                    <p className="text-text-secondary text-sm font-medium">{section.description}</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-primary/20 group-hover:text-primary transition-all">
+                    →
+                  </div>
+                </button>
+              );
+
+              if (section.permission) {
+                return (
+                  <RequirePermission key={section.id} action={section.permission}>
+                    {button}
+                  </RequirePermission>
+                );
+              }
+
+              return button;
+            })}
           </div>
         );
       default:
@@ -65,7 +83,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl pb-12">
+    <div className="contents space-y-8 max-w-5xl pb-12">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 overflow-hidden">
         <div>
           {activeSection && (
@@ -114,4 +132,25 @@ export default function SettingsPage() {
       )}
     </div>
   );
+}
+
+function TaxesSectionWrapper() {
+  const [settings, setSettings] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    import('@/app/actions/settings').then(({ getBusinessSettings }) => {
+      getBusinessSettings().then(({ data }) => {
+        if (data) setSettings(data);
+        setLoading(false);
+      });
+    });
+  }, []);
+
+  if (loading) return (
+    <div className="h-[400px] flex items-center justify-center">
+       <Loader2 className="w-10 h-10 text-primary animate-spin" />
+    </div>
+  );
+  return <TaxesSection settings={settings} />;
 }

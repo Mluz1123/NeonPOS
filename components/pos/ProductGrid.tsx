@@ -3,7 +3,7 @@
 import { Search, Grid, List, Package, Plus, Loader2 } from 'lucide-react';
 import { Product, Category } from '@/types';
 import { usePOSStore } from '@/stores/usePOSStore';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useEffect, useState, useTransition } from 'react';
 import { getProducts } from '@/app/actions/products';
 import { getCategories } from '@/app/actions/categories';
@@ -122,7 +122,7 @@ export function ProductGrid() {
                 <span className="absolute top-6 left-6 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded-lg uppercase">Agotado</span>
               )}
               <p className="font-bold text-text-main line-clamp-2 mb-1">{product.name}</p>
-              <p className="text-primary-dark font-black text-lg mt-auto">${Number(product.sale_price).toFixed(2)}</p>
+              <p className="font-black text-primary-dark text-lg mt-auto">{formatCurrency(product.sale_price)}</p>
               <div className="mt-2 flex justify-between items-center">
                 <span className={cn(
                   "text-[10px] uppercase font-bold",
@@ -169,7 +169,7 @@ export function ProductGrid() {
               </div>
 
               <div className="flex items-center gap-4 text-right pr-2">
-                <p className="font-black text-primary-dark text-lg">${Number(product.sale_price).toFixed(2)}</p>
+                <p className="font-black text-primary-dark text-lg">{formatCurrency(product.sale_price)}</p>
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Plus className="w-5 h-5 text-primary" />
                 </div>

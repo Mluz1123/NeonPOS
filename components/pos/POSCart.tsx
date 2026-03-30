@@ -5,8 +5,10 @@ import { Trash2, Minus, Plus, CreditCard, Banknote, Landmark, Loader2, AlertCirc
 import { useState, useEffect, useTransition } from 'react';
 import { createSale } from '@/app/actions/sales';
 import { getCurrentCashRegister } from '@/app/actions/cash';
+import { getBusinessSettings, TaxSetting } from '@/app/actions/settings';
 import { CashRegister } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export function POSCart() {
   const { tabs, activeTabId, updateQuantity, removeFromCart, clearCart } = usePOSStore();
@@ -15,19 +17,33 @@ export function POSCart() {
   const [cashRegister, setCashRegister] = useState<CashRegister | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [taxSettings, setTaxSettings] = useState<TaxSetting[]>([]);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    async function fetchRegister() {
-      const { data } = await getCurrentCashRegister();
-      if (data) setCashRegister(data);
+    async function fetchData() {
+      const [{ data: registerData }, { data: settingsData }] = await Promise.all([
+        getCurrentCashRegister(),
+        getBusinessSettings()
+      ]);
+      if (registerData) setCashRegister(registerData);
+      if (settingsData?.tax_settings) setTaxSettings(settingsData.tax_settings);
     }
-    fetchRegister();
+    fetchData();
   }, [activeTabId]); // Refresh when changing tabs
 
   const subtotal = activeTab?.items.reduce((acc, item) => acc + item.subtotal, 0) || 0;
-  const tax = subtotal * 0.16;
-  const total = subtotal + tax;
+
+  // Calcular impuestos habilitados
+  const activeTaxes = taxSettings.filter(t => t.enabled);
+  const taxDetail = activeTaxes.map(t => ({
+    name: t.name,
+    percentage: t.percentage,
+    amount: subtotal * (t.percentage / 100)
+  }));
+
+  const totalTaxAmount = taxDetail.reduce((acc, curr) => acc + curr.amount, 0);
+  const total = subtotal + totalTaxAmount;
 
   const handlePay = async () => {
     if (!activeTab || activeTab.items.length === 0) return;
@@ -43,7 +59,7 @@ export function POSCart() {
       const result = await createSale({
         cash_register_id: cashRegister.id,
         total_amount: total,
-        tax_amount: tax,
+        tax_amount: totalTaxAmount,
         payment_method: paymentMethod,
         items: activeTab.items.map(item => ({
           product_id: item.product_id,
@@ -55,8 +71,19 @@ export function POSCart() {
 
       if (result.error) {
         setError(result.error);
+        toast.error('Error al procesar pago', {
+          description: result.error
+        });
       } else {
-        setSuccess('¡Venta realizada con éxito!');
+        const amountDisplay = formatCurrency(total);
+        const methodDisplay = paymentMethod === 'cash' ? 'Efectivo' : paymentMethod === 'card' ? 'Tarjeta' : 'Transferencia';
+
+        toast.success('¡Venta Completada!', {
+          description: `Total cobrado: ${amountDisplay} vía ${methodDisplay}`,
+          duration: 5000,
+        });
+
+        setSuccess(`Pago de ${amountDisplay} recibido`);
         clearCart();
         // Clear success message after 3 seconds
         setTimeout(() => setSuccess(null), 3000);
@@ -78,7 +105,7 @@ export function POSCart() {
     <div className="bg-white rounded-3xl flex flex-col h-full border border-gray-100 shadow-sm overflow-hidden relative">
       <div className="p-6 border-b border-gray-50 flex justify-between items-center">
         <h2 className="text-xl font-bold">Resumen de Venta</h2>
-        <button 
+        <button
           onClick={clearCart}
           className="text-red-500 hover:text-red-700 text-sm font-medium"
         >
@@ -98,18 +125,18 @@ export function POSCart() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-text-main line-clamp-1">{item.product?.name}</p>
-              <p className="text-sm text-text-secondary">${Number(item.unit_price).toFixed(2)} c/u</p>
+              <p className="text-sm text-text-secondary">{formatCurrency(item.unit_price)} c/u</p>
             </div>
-            
+
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1">
-              <button 
+              <button
                 onClick={() => updateQuantity(item.product_id, Math.max(1, item.quantity - 1))}
                 className="p-1 hover:bg-white rounded-lg shadow-sm transition-all"
               >
                 <Minus className="w-4 h-4" />
               </button>
               <span className="w-8 text-center font-bold">{item.quantity}</span>
-              <button 
+              <button
                 onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                 className="p-1 hover:bg-white rounded-lg shadow-sm transition-all"
               >
@@ -118,10 +145,10 @@ export function POSCart() {
             </div>
 
             <div className="w-20 text-right">
-              <p className="font-bold text-primary-dark">${Number(item.subtotal).toFixed(2)}</p>
+              <p className="font-bold text-primary-dark">{formatCurrency(item.subtotal)}</p>
             </div>
 
-            <button 
+            <button
               onClick={() => removeFromCart(item.product_id)}
               className="p-2 text-gray-300 hover:text-red-500 transition-colors"
             >
@@ -138,7 +165,7 @@ export function POSCart() {
             {error}
           </div>
         )}
-        
+
         {success && (
           <div className="flex items-center gap-2 p-3 bg-green-50 text-green-600 rounded-2xl text-xs font-bold">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
@@ -149,20 +176,30 @@ export function POSCart() {
         <div className="space-y-2">
           <div className="flex justify-between text-text-secondary">
             <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>{formatCurrency(subtotal)}</span>
           </div>
-          <div className="flex justify-between text-text-secondary">
-            <span>IVA (16%)</span>
-            <span>${tax.toFixed(2)}</span>
-          </div>
+
+          {taxDetail.map((t, index) => (
+            <div key={index} className="flex justify-between text-text-secondary text-xs italic">
+              <span>{t.name} ({t.percentage}%)</span>
+              <span>{formatCurrency(t.amount)}</span>
+            </div>
+          ))}
+
+          {taxDetail.length > 1 && (
+            <div className="flex justify-between text-text-secondary font-bold border-t border-gray-100 pt-1">
+              <span>Total Impuestos</span>
+              <span>{formatCurrency(totalTaxAmount)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-2xl font-black text-text-main pt-2 border-t border-gray-200">
             <span>Total</span>
-            <span className="text-primary-dark">${total.toFixed(2)}</span>
+            <span className="text-primary-dark">{formatCurrency(total)}</span>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <button 
+          <button
             onClick={() => setPaymentMethod('cash')}
             className={cn(
               "flex flex-col items-center justify-center p-3 rounded-2xl border transition-all gap-1 group",
@@ -172,8 +209,8 @@ export function POSCart() {
             <Banknote className={cn("w-6 h-6", paymentMethod === 'cash' ? "text-primary" : "text-gray-400 group-hover:text-primary/70")} />
             <span className={cn("text-[10px] font-bold uppercase", paymentMethod === 'cash' ? "text-text-main" : "text-gray-400")}>Efectivo</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={() => setPaymentMethod('card')}
             className={cn(
               "flex flex-col items-center justify-center p-3 rounded-2xl border transition-all gap-1 group",
@@ -183,8 +220,8 @@ export function POSCart() {
             <CreditCard className={cn("w-6 h-6", paymentMethod === 'card' ? "text-primary" : "text-gray-400 group-hover:text-primary/70")} />
             <span className={cn("text-[10px] font-bold uppercase", paymentMethod === 'card' ? "text-text-main" : "text-gray-400")}>Tarjeta</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={() => setPaymentMethod('transfer')}
             className={cn(
               "flex flex-col items-center justify-center p-3 rounded-2xl border transition-all gap-1 group",
@@ -192,11 +229,11 @@ export function POSCart() {
             )}
           >
             <Landmark className={cn("w-6 h-6", paymentMethod === 'transfer' ? "text-primary" : "text-gray-400 group-hover:text-primary/70")} />
-            <span className={cn("text-[10px] font-bold uppercase", paymentMethod === 'transfer' ? "text-text-main" : "text-gray-400")}>Transf.</span>
+            <span className={cn("text-[10px] font-bold uppercase", paymentMethod === 'transfer' ? "text-text-main" : "text-gray-400")}>Nequi/Transf.</span>
           </button>
         </div>
 
-        <button 
+        <button
           onClick={handlePay}
           disabled={isPending}
           className="w-full neon-button py-4 rounded-2xl text-lg shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50"

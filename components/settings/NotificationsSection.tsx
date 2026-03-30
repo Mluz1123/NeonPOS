@@ -24,7 +24,7 @@ export function NotificationsSection() {
     const newValue = !settings[key];
     const newSettings = { ...settings, [key]: newValue };
     setSettings(newSettings);
-    
+
     startTransition(async () => {
       const { error } = await updateBusinessSettings({ [key]: newValue });
       if (error) toast.error('Error: ' + error);
@@ -47,7 +47,7 @@ export function NotificationsSection() {
   if (loading) return <div className="p-8 text-center text-text-secondary">Cargando configuración...</div>;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl">
+    <div className="contents space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl">
       {/* Stock Alerts Group */}
       <div className="bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm space-y-8 transition-all hover:shadow-md">
         <div className="flex items-center gap-4 border-b border-gray-50 pb-6">
@@ -86,13 +86,13 @@ export function NotificationsSection() {
               <p className="text-xs text-text-secondary font-medium max-w-xs">Define un nivel de stock para alertas prioritarias si el producto no tiene uno específico.</p>
             </div>
             <div className="flex items-center gap-3">
-              <input 
-                type="number" 
+              <input
+                type="number"
                 value={settings?.stock_alert_threshold}
                 onChange={(e) => handleInputChange('stock_alert_threshold', parseInt(e.target.value))}
                 className="w-24 px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-center focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
-              <button 
+              <button
                 onClick={() => handleSaveField('stock_alert_threshold')}
                 disabled={isPending}
                 className="p-3 bg-white border border-gray-100 rounded-2xl text-text-secondary hover:text-primary hover:border-primary transition-all shadow-sm"
@@ -107,7 +107,7 @@ export function NotificationsSection() {
       {/* Operations Group */}
       <div className="bg-background-dark rounded-[40px] p-10 text-white shadow-2xl relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -mr-32 -mt-32" />
-        
+
         <div className="flex items-center gap-4 border-b border-white/10 pb-6 mb-8 relative z-10">
           <div className="p-4 bg-primary/20 rounded-2xl text-primary">
             <Receipt className="w-6 h-6" />
@@ -144,14 +144,14 @@ export function NotificationsSection() {
               <p className="text-xs font-black uppercase tracking-widest text-gray-400">Email para Reportes Diarios</p>
             </div>
             <div className="bg-white/5 p-2 rounded-[28px] border border-white/10 flex items-center group-focus-within:border-primary/50 transition-all">
-              <input 
-                type="email" 
+              <input
+                type="email"
                 placeholder="ejemplo@negocio.com"
                 value={settings?.notification_email || ''}
                 onChange={(e) => handleInputChange('notification_email', e.target.value)}
                 className="flex-1 bg-transparent px-6 py-3 border-none outline-none font-medium text-sm placeholder:text-gray-600"
               />
-              <button 
+              <button
                 onClick={() => handleSaveField('notification_email')}
                 className="bg-primary text-background-dark px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary/20"
               >

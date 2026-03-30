@@ -1,7 +1,7 @@
 "use client";
 
 import { Package, Plus, Search, Filter, AlertCircle, Loader2, ArrowLeftRight, Tags, Pencil, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useState, useEffect, useTransition } from 'react';
 import { getProducts, deleteProduct } from '@/app/actions/products';
 import { Product } from '@/types';
@@ -119,29 +119,29 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      <header className="flex justify-between items-end">
+      <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
         <div>
-          <h1 className="text-3xl font-black text-text-main">Inventario</h1>
+          <h1 className="text-3xl md:text-5xl font-black text-text-main tracking-tighter">Inventario</h1>
           <p className="text-text-secondary font-medium">Gestiona tus productos y niveles de stock.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="px-6 py-3 bg-white border border-gray-100 rounded-2xl flex items-center gap-2 font-bold text-text-secondary hover:bg-gray-50 transition-all shadow-sm"
+            className="flex-1 md:flex-none px-4 py-3 bg-white border border-gray-100 rounded-2xl flex items-center justify-center gap-2 font-bold text-text-secondary hover:bg-gray-50 transition-all shadow-sm text-sm"
           >
-            <Tags className="w-5 h-5 text-gray-400" />
-            Nueva Categoría
+            <Tags className="w-4 h-4 text-gray-400" />
+            Categoría
           </button>
           <button
             onClick={() => setIsAdjustmentModalOpen(true)}
-            className="px-6 py-3 bg-white border border-gray-100 rounded-2xl flex items-center gap-2 font-bold text-text-secondary hover:bg-gray-50 transition-all shadow-sm"
+            className="flex-1 md:flex-none px-4 py-3 bg-white border border-gray-100 rounded-2xl flex items-center justify-center gap-2 font-bold text-text-secondary hover:bg-gray-50 transition-all shadow-sm text-sm"
           >
-            <ArrowLeftRight className="w-5 h-5 text-gray-400" />
-            Ajustar Stock
+            <ArrowLeftRight className="w-4 h-4 text-gray-400" />
+            Stock
           </button>
           <button
             onClick={handleNew}
-            className="neon-button px-6 py-3 rounded-2xl flex items-center gap-2 shadow-lg shadow-primary/20"
+            className="w-full md:w-auto neon-button px-6 py-4 md:py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 font-black"
           >
             <Plus className="w-5 h-5" />
             Nuevo Producto
@@ -173,7 +173,7 @@ export default function InventoryPage() {
         />
       </div>
 
-      <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
+      <div className="bg-white rounded-[32px] md:rounded-[40px] border border-gray-100 shadow-sm overflow-x-auto min-h-[400px] custom-scrollbar">
         {loading ? (
           <div className="h-[400px] flex items-center justify-center">
             <Loader2 className="w-12 h-12 text-primary animate-spin" />
@@ -214,7 +214,7 @@ export default function InventoryPage() {
                       {item.category?.name || 'S/C'}
                     </span>
                   </td>
-                  <td className="px-8 py-5 font-black text-lg text-text-main">${Number(item.sale_price).toFixed(2)}</td>
+                  <td className="px-8 py-5 font-black text-lg text-text-main">{formatCurrency(item.sale_price)}</td>
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-2">
                       <span className={cn(

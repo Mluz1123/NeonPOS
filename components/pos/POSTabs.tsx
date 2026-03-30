@@ -4,6 +4,7 @@ import { usePOSStore } from '@/stores/usePOSStore';
 import { X, Plus, Edit2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export function POSTabs() {
   const { tabs, activeTabId, setActiveTab, addTab, removeTab, renameTab } = usePOSStore();
@@ -56,9 +57,15 @@ export function POSTabs() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (tab.items && tab.items.length > 0) {
+                    toast.error('Venta Pendiente', {
+                      description: 'No puedes cerrar esta pestaña porque tiene productos activos. Termina la venta o limpia el carrito primero.'
+                    });
+                    return;
+                  }
                   removeTab(tab.id);
                 }}
-                className="p-1 hover:bg-red-100 text-red-500 rounded-lg"
+                className="p-1 hover:bg-red-100 text-red-500 rounded-lg shadow-[0_0_10px_rgba(239,68,68,0)] hover:shadow-red-500/20 transition-all"
               >
                 <X className="w-3 h-3" />
               </button>

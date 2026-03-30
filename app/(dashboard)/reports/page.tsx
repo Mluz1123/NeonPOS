@@ -246,9 +246,13 @@ export default function ReportsPage() {
                   <td className="px-10 py-5">
                     <span className={cn(
                       "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest",
-                      sale.payment_method === 'cash' ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
+                      sale.payment_method === 'cash' ? "bg-green-50 text-green-600" : 
+                      sale.payment_method === 'card' ? "bg-blue-50 text-blue-600" : 
+                      "bg-purple-50 text-purple-600"
                     )}>
-                      {sale.payment_method === 'cash' ? 'Efectivo' : 'Tarjeta'}
+                      {sale.payment_method === 'cash' ? 'Efectivo' : 
+                       sale.payment_method === 'card' ? 'Tarjeta' : 
+                       'Transferencia'}
                     </span>
                   </td>
                   <td className="px-10 py-5 text-right font-black text-lg text-text-main">

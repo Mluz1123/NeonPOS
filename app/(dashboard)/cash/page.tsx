@@ -1,7 +1,7 @@
 "use client";
 
 import { Calculator, ArrowUpCircle, ArrowDownCircle, Lock, Unlock, DollarSign, Loader2, Minus, Plus, RefreshCcw } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useState, useEffect, useTransition } from 'react';
 import { getCurrentCashRegister, getCurrentCashStatus, getCashMovements } from '@/app/actions/cash';
 import { CashRegister, CashMovement } from '@/types';
@@ -68,10 +68,10 @@ export default function CashPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      <header className="flex justify-between items-end">
+      <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
         <div>
-          <h1 className="text-3xl font-black text-text-main">Caja de Turno</h1>
-          <p className="text-text-secondary flex items-center gap-2">
+          <h1 className="text-3xl md:text-5xl font-black text-text-main tracking-tighter">Caja de Turno</h1>
+          <p className="text-text-secondary flex items-center gap-2 font-medium">
             Iniciada: {new Date(cashRegister.opened_at).toLocaleTimeString()}
             <span className="w-1 h-1 bg-gray-300 rounded-full" />
             Vendedor: Tú
@@ -80,41 +80,41 @@ export default function CashPage() {
         <div className="flex gap-4">
           <button 
             onClick={fetchData}
-            className="p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+            className="p-4 md:p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
           >
             <RefreshCcw className={cn("w-6 h-6 text-gray-400", isPending && "animate-spin")} />
           </button>
           <button 
             onClick={() => setIsCloseModalOpen(true)}
-            className="px-6 py-3 bg-white rounded-2xl border border-red-100 shadow-sm flex items-center gap-2 font-bold text-red-500 hover:bg-red-50 transition-colors"
+            className="flex-1 md:flex-none px-6 py-4 md:py-3 bg-white rounded-2xl border border-red-100 shadow-sm flex items-center justify-center gap-3 font-black text-red-500 hover:bg-red-50 transition-colors uppercase tracking-widest text-xs"
           >
             <Lock className="w-5 h-5" />
-            Realizar Arqueo y Cierre
+            Cerrar Turno
           </button>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm">
           <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Monto Inicial</p>
-          <p className="text-3xl font-black text-text-main">${Number(cashRegister.initial_amount).toFixed(2)}</p>
+          <p className="text-2xl md:text-3xl font-black text-text-main">{formatCurrency(cashRegister.initial_amount)}</p>
         </div>
-        <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm">
           <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Ventas Efectivo</p>
-          <p className="text-3xl font-black text-green-500">+${status?.cash_sales.toFixed(2) || '0.00'}</p>
+          <p className="text-2xl md:text-3xl font-black text-green-500">+{formatCurrency(status?.cash_sales || 0)}</p>
         </div>
-        <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Mov. Manuales (Neto)</p>
+        <div className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm">
+          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">Mov. Manuales</p>
           <p className={cn(
-            "text-3xl font-black",
+            "text-2xl md:text-3xl font-black",
             (status?.net_movements || 0) >= 0 ? "text-blue-500" : "text-red-500"
           )}>
-            {(status?.net_movements || 0) >= 0 ? '+' : ''}${status?.net_movements.toFixed(2) || '0.00'}
+            {(status?.net_movements || 0) >= 0 ? '+' : ''}{formatCurrency(status?.net_movements || 0)}
           </p>
         </div>
-        <div className="bg-primary p-8 rounded-[32px] border border-primary shadow-xl shadow-primary/20">
-          <p className="text-[10px] text-background-dark/60 font-black uppercase tracking-widest mb-2">Efectivo en Caja</p>
-          <p className="text-3xl font-black text-background-dark">${expectedAmount.toFixed(2)}</p>
+        <div className="bg-primary p-6 md:p-8 rounded-[32px] border border-primary shadow-xl shadow-primary/20">
+          <p className="text-[10px] text-background-dark/60 font-black uppercase tracking-widest mb-2">En Caja</p>
+          <p className="text-2xl md:text-3xl font-black text-background-dark">{formatCurrency(expectedAmount)}</p>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export default function CashPage() {
                   <p className="font-bold text-text-main">{m.reason}</p>
                   <p className="text-xs text-gray-400">{new Date(m.created_at).toLocaleTimeString()}</p>
                 </div>
-                <p className="font-black text-green-600 text-lg">+${Number(m.amount).toFixed(2)}</p>
+                <p className="font-black text-green-600 text-lg">+{formatCurrency(m.amount)}</p>
               </div>
             ))}
             {movements.filter(m => m.type === 'income').length === 0 && (
@@ -175,7 +175,7 @@ export default function CashPage() {
                   <p className="font-bold text-text-main">{m.reason}</p>
                   <p className="text-xs text-gray-400">{new Date(m.created_at).toLocaleTimeString()}</p>
                 </div>
-                <p className="font-black text-red-600 text-lg">-${Number(m.amount).toFixed(2)}</p>
+                <p className="font-black text-red-600 text-lg">-{formatCurrency(m.amount)}</p>
               </div>
             ))}
             {movements.filter(m => m.type === 'expense').length === 0 && (

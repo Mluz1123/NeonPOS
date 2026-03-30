@@ -24,7 +24,7 @@ export function SecuritySection() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-  const [formData, setFormData] = useState<{name: string, pin_code: string, role: 'admin'|'manager'|'cashier', is_active: boolean}>({ name: '', pin_code: '', role: 'cashier', is_active: true });
+  const [formData, setFormData] = useState<{ name: string, pin_code: string, role: 'admin' | 'manager' | 'cashier', is_active: boolean }>({ name: '', pin_code: '', role: 'cashier', is_active: true });
 
   useEffect(() => {
     async function loadData() {
@@ -39,7 +39,7 @@ export function SecuritySection() {
   const handlePermissionToggle = (role: string, permission: string) => {
     const currentPerms = settings?.role_permissions || {};
     const rolePerms = currentPerms[role] || {};
-    
+
     const newPermissions = {
       ...currentPerms,
       [role]: {
@@ -47,9 +47,9 @@ export function SecuritySection() {
         [permission]: !rolePerms[permission]
       }
     };
-    
+
     setSettings({ ...settings, role_permissions: newPermissions });
-    
+
     startTransition(async () => {
       const { error } = await updateBusinessSettings({ role_permissions: newPermissions });
       if (error) toast.error('Error al actualizar permisos');
@@ -77,7 +77,7 @@ export function SecuritySection() {
       } else {
         res = await createStaffMember(formData as any);
       }
-      
+
       if (res.error) {
         toast.error(res.error);
       } else {
@@ -92,7 +92,7 @@ export function SecuritySection() {
 
   const handleDeleteStaff = async (id: string, name: string) => {
     if (!confirm(`¿Estás seguro de eliminar a ${name}?`)) return;
-    
+
     startTransition(async () => {
       const { error } = await deleteStaffMember(id);
       if (error) toast.error(error);
@@ -106,7 +106,7 @@ export function SecuritySection() {
   if (loading) return <div className="p-8 text-center text-text-secondary">Cargando seguridad...</div>;
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl">
+    <div className="contents space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl">
 
       {/* Staff Management */}
       <div className="bg-white rounded-[40px] border border-gray-100 p-10 shadow-sm space-y-8">
@@ -120,7 +120,7 @@ export function SecuritySection() {
               <p className="text-sm text-text-secondary font-medium">Asigna PINs de acceso para compartir el mismo terminal.</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => openModal()}
             className="neon-button px-6 py-3 rounded-2xl flex items-center gap-2 text-sm"
           >
@@ -152,8 +152,8 @@ export function SecuritySection() {
                       <span className={cn(
                         "text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg",
                         staff.role === 'admin' ? "bg-red-50 text-red-600" :
-                        staff.role === 'manager' ? "bg-blue-50 text-blue-600" :
-                        "bg-green-50 text-green-700"
+                          staff.role === 'manager' ? "bg-blue-50 text-blue-600" :
+                            "bg-green-50 text-green-700"
                       )}>
                         {staff.role === 'admin' ? 'Administrador' : staff.role === 'manager' ? 'Gerente' : 'Cajero'}
                       </span>
@@ -178,7 +178,7 @@ export function SecuritySection() {
       {/* Role Permissions Matrix */}
       <div className="bg-background-dark rounded-[40px] p-10 text-white shadow-2xl relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] -mr-48 -mt-48" />
-        
+
         <div className="flex items-center gap-4 border-b border-white/10 pb-6 mb-8 relative z-10">
           <div className="p-4 bg-primary/20 rounded-2xl text-primary">
             <Shield className="w-6 h-6" />
@@ -205,23 +205,23 @@ export function SecuritySection() {
                     <p className="font-bold text-sm text-white">{perm.label}</p>
                     <p className="text-[11px] text-gray-500 font-medium">{perm.desc}</p>
                   </td>
-                  
+
                   {['manager', 'cashier'].map(role => {
-                     const isGranted = settings?.role_permissions?.[role]?.[perm.id] ?? false;
-                     return (
-                        <td key={role} className="py-5 px-6 text-center">
-                          <button
-                            onClick={() => handlePermissionToggle(role, perm.id)}
-                            className={cn(
-                              "inline-flex items-center justify-center w-10 h-10 rounded-[14px] transition-all relative overflow-hidden",
-                              isGranted ? "bg-primary/20 hover:bg-primary/30 text-primary" : "bg-white/5 hover:bg-white/10 text-gray-500"
-                            )}
-                          >
-                             {isGranted ? <Check className="w-5 h-5 absolute z-10" /> : <X className="w-4 h-4 absolute z-10" />}
-                             {isGranted && <div className="absolute inset-0 bg-primary/10 blur-sm animate-pulse" />}
-                          </button>
-                        </td>
-                     );
+                    const isGranted = settings?.role_permissions?.[role]?.[perm.id] ?? false;
+                    return (
+                      <td key={role} className="py-5 px-6 text-center">
+                        <button
+                          onClick={() => handlePermissionToggle(role, perm.id)}
+                          className={cn(
+                            "inline-flex items-center justify-center w-10 h-10 rounded-[14px] transition-all relative overflow-hidden",
+                            isGranted ? "bg-primary/20 hover:bg-primary/30 text-primary" : "bg-white/5 hover:bg-white/10 text-gray-500"
+                          )}
+                        >
+                          {isGranted ? <Check className="w-5 h-5 absolute z-10" /> : <X className="w-4 h-4 absolute z-10" />}
+                          {isGranted && <div className="absolute inset-0 bg-primary/10 blur-sm animate-pulse" />}
+                        </button>
+                      </td>
+                    );
                   })}
                 </tr>
               ))}
@@ -239,27 +239,27 @@ export function SecuritySection() {
               <h3 className="font-black text-2xl tracking-tight text-text-main">
                 {editingStaff ? 'Editar Empleado' : 'Nuevo Empleado'}
               </h3>
-              
+
               <div className="space-y-4">
                 <div className="space-y-1">
                   <label className="text-xs font-black uppercase tracking-widest text-text-secondary">Nombre Completo</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Ej. Ana Gómez"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl font-medium focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-black uppercase tracking-widest text-text-secondary">PIN (4 dígitos)</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       maxLength={4}
                       value={formData.pin_code}
-                      onChange={e => setFormData({...formData, pin_code: e.target.value.replace(/\D/g, '')})}
+                      onChange={e => setFormData({ ...formData, pin_code: e.target.value.replace(/\D/g, '') })}
                       placeholder="****"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl font-bold tracking-[0.5em] text-center focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     />
@@ -268,7 +268,7 @@ export function SecuritySection() {
                     <label className="text-xs font-black uppercase tracking-widest text-text-secondary">Rol Principal</label>
                     <select
                       value={formData.role}
-                      onChange={e => setFormData({...formData, role: e.target.value as 'admin'|'manager'|'cashier'})}
+                      onChange={e => setFormData({ ...formData, role: e.target.value as 'admin' | 'manager' | 'cashier' })}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-text-main focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none"
                     >
                       <option value="cashier">Cajero</option>
@@ -279,27 +279,27 @@ export function SecuritySection() {
                 </div>
 
                 <div className="pt-4 flex items-center gap-3">
-                   <input 
-                      type="checkbox" 
-                      id="isActive"
-                      checked={formData.is_active}
-                      onChange={e => setFormData({...formData, is_active: e.target.checked})}
-                      className="w-5 h-5 rounded accent-primary" 
-                   />
-                   <label htmlFor="isActive" className="font-bold text-sm text-text-main cursor-pointer">
-                      Cuenta Activa (Permitir acceso)
-                   </label>
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={formData.is_active}
+                    onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+                    className="w-5 h-5 rounded accent-primary"
+                  />
+                  <label htmlFor="isActive" className="font-bold text-sm text-text-main cursor-pointer">
+                    Cuenta Activa (Permitir acceso)
+                  </label>
                 </div>
               </div>
 
               <div className="flex gap-3 pt-6">
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 px-6 py-4 bg-gray-100 hover:bg-gray-200 text-text-secondary rounded-[20px] font-bold transition-colors"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   onClick={handleSaveStaff}
                   disabled={isPending || formData.name.length === 0 || formData.pin_code.length !== 4}
                   className="flex-1 neon-button px-6 py-4 rounded-[20px] font-black uppercase tracking-wider flex justify-center items-center gap-2 disabled:opacity-50 disabled:hover:transform-none"

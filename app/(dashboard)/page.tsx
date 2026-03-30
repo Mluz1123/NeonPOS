@@ -2,8 +2,9 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { TrendingUp, Package, ShoppingBag, DollarSign, AlertTriangle, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { getDashboardStats, getWeeklySalesChart, getTopProducts, DashboardStats } from '@/app/actions/reports';
 import { getCurrentCashRegister, getCurrentCashStatus } from '@/app/actions/cash';
 
@@ -46,7 +47,7 @@ export default function DashboardPage() {
   }
 
   const statCards = [
-    { label: 'Ventas del Día', value: `$${stats?.today_sales.toFixed(2) || '0.00'}`, icon: DollarSign, color: 'bg-primary/10 text-primary' },
+    { label: 'Ventas del Día', value: formatCurrency(stats?.today_sales || 0), icon: DollarSign, color: 'bg-primary/10 text-primary' },
     { label: 'Pedidos Hoy', value: stats?.today_orders.toString() || '0', icon: ShoppingBag, color: 'bg-blue-50 text-blue-500' },
     { label: 'Stock Bajo', value: stats?.low_stock_count.toString() || '0', icon: AlertTriangle, color: 'bg-red-50 text-red-500' },
     { label: 'Productos Activos', value: stats?.active_products.toString() || '0', icon: Package, color: 'bg-purple-50 text-purple-500' },
@@ -54,15 +55,18 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      <header className="flex justify-between items-end">
+      <header className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
         <div>
-          <h1 className="text-4xl font-black text-text-main tracking-tight">Dashboard</h1>
-          <p className="text-text-secondary font-medium">Resumen general de las operaciones de hoy.</p>
+          <h1 className="text-3xl md:text-5xl font-black text-text-main tracking-tighter">Dashboard</h1>
+          <p className="text-text-secondary font-medium md:text-lg">Resumen general de las operaciones de hoy.</p>
         </div>
         {cashStatus > 0 && (
-          <div className="bg-white px-6 py-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 text-sm font-black text-text-main animate-in fade-in slide-in-from-right-4">
-            <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
-            Caja Abierta: <span className="text-primary-dark">${cashStatus.toFixed(2)}</span>
+          <div className="bg-white px-6 py-4 md:py-3 rounded-[24px] border border-gray-100 shadow-sm flex items-center justify-between md:justify-start gap-4 text-sm font-black text-text-main animate-in fade-in slide-in-from-right-4 w-full md:w-auto">
+            <div className="flex items-center gap-3">
+              <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
+              Caja Abierta:
+            </div>
+            <span className="text-primary-dark text-lg md:text-base">{formatCurrency(cashStatus)}</span>
           </div>
         )}
       </header>
@@ -111,7 +115,7 @@ export default function DashboardPage() {
                   tickLine={false} 
                   tick={{fill: '#6B7280', fontSize: 13, fontWeight: 700}} 
                   dx={-10}
-                  tickFormatter={(val) => `$${val}`}
+                  tickFormatter={(val) => formatCurrency(val)}
                 />
                 <Tooltip 
                   contentStyle={{ 
@@ -170,9 +174,12 @@ export default function DashboardPage() {
           </div>
           
           <div className="mt-8 pt-6 border-t border-gray-50">
-            <button className="w-full py-4 bg-gray-50 text-text-secondary rounded-2xl font-bold hover:bg-primary hover:text-background-dark transition-all text-sm uppercase tracking-widest">
+            <Link 
+              href="/reports"
+              className="w-full flex items-center justify-center py-4 bg-gray-50 text-text-secondary rounded-2xl font-bold hover:bg-primary hover:text-background-dark transition-all text-sm uppercase tracking-widest"
+            >
               Ver Reporte Completo
-            </button>
+            </Link>
           </div>
         </div>
       </div>

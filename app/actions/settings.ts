@@ -3,6 +3,13 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
+export interface TaxSetting {
+  id: string;
+  name: string;
+  percentage: number;
+  enabled: boolean;
+}
+
 export interface BusinessSettings {
   id: string;
   name: string;
@@ -23,6 +30,7 @@ export interface BusinessSettings {
       [permission: string]: boolean;
     };
   };
+  tax_settings?: TaxSetting[];
 }
 
 type ActionResult<T> = { data: T; error: null } | { data: null; error: string };
@@ -77,7 +85,11 @@ export async function getBusinessSettings(): Promise<ActionResult<BusinessSettin
             manage_discounts: false,
             manage_settings: false
           }
-        }
+        },
+        tax_settings: [
+          { id: 'iva', name: 'IVA', percentage: 19, enabled: true },
+          { id: 'impoconsumo', name: 'Impoconsumo', percentage: 8, enabled: false }
+        ]
       },
       error: null
     };

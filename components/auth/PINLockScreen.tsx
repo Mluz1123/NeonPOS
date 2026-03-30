@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { validatePin } from '@/app/actions/staff';
 import { Lock, ArrowRight, Delete } from 'lucide-react';
@@ -12,6 +12,13 @@ export function PINLockScreen({ hasStaff }: { hasStaff?: boolean | null }) {
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorShake, setErrorShake] = useState(false);
+
+  // Reset PIN when the screen appears (currentStaff goes null)
+  useEffect(() => {
+    if (!currentStaff) {
+      setPin('');
+    }
+  }, [currentStaff]);
 
   // If already logged in, or no staff configured yet, do not show lock screen
   if (currentStaff || hasStaff === false) return null;

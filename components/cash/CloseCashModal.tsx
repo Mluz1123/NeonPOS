@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { X, Loader2, Lock, AlertTriangle, ArrowRight } from 'lucide-react';
 import { closeCashRegister } from '@/app/actions/cash';
 import { useTransition, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 const CloseCashSchema = z.object({
   final_amount: z.coerce.number().min(0, 'Monto inválido'),
@@ -72,7 +72,7 @@ export function CloseCashModal({ cashRegisterId, expectedAmount, isOpen, onClose
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 bg-gray-50 rounded-2xl">
               <p className="text-[10px] font-black uppercase text-gray-400 mb-1">Efectivo Esperado</p>
-              <p className="text-xl font-bold text-text-main">${Number(expectedAmount).toFixed(2)}</p>
+              <p className="text-xl font-bold text-text-main">{formatCurrency(expectedAmount)}</p>
             </div>
             <div className={cn(
               "p-4 rounded-2xl transition-colors",
@@ -83,7 +83,7 @@ export function CloseCashModal({ cashRegisterId, expectedAmount, isOpen, onClose
                 "text-xl font-bold",
                 diff === 0 ? "text-green-600" : diff > 0 ? "text-blue-600" : "text-red-600"
               )}>
-                {diff >= 0 ? '+' : '-'}${Math.abs(diff).toFixed(2)}
+                {diff >= 0 ? '+' : '-'}{formatCurrency(Math.abs(diff))}
               </p>
             </div>
           </div>
@@ -118,9 +118,9 @@ export function CloseCashModal({ cashRegisterId, expectedAmount, isOpen, onClose
               <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3">
                 <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
                 <p className="text-sm text-amber-800 leading-relaxed font-medium">
-                  Estás cerrando el turno con un arqueo de <strong>${Number(finalAmount).toFixed(2)}</strong>. 
+                  Estás cerrando el turno con un arqueo de <strong>{formatCurrency(finalAmount)}</strong>. 
                   {diff !== 0 && (
-                    <span> Existe un {diff > 0 ? 'sobrante' : 'faltante'} de <strong>${Math.abs(diff).toFixed(2)}</strong>.</span>
+                    <span> Existe un {diff > 0 ? 'sobrante' : 'faltante'} de <strong>{formatCurrency(Math.abs(diff))}</strong>.</span>
                   )} 
                   ¿Deseas confirmar el cierre? Esta acción no se puede deshacer.
                 </p>
