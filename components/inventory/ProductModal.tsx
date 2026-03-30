@@ -3,11 +3,12 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Loader2, Save } from 'lucide-react';
+import { X, Loader2, Save, ImagePlus, Trash2 } from 'lucide-react';
 import { Product, Category } from '@/types';
 import { createProduct, updateProduct } from '@/app/actions/products';
-import { useTransition, useEffect, useState } from 'react';
+import { useTransition, useEffect, useState, useRef } from 'react';
 import { getCategories } from '@/app/actions/categories';
+import { createClient } from '@/lib/supabase/client';
 
 const ProductSchema = z.object({
   name: z.string().min(1, 'Nombre requerido'),
@@ -18,6 +19,7 @@ const ProductSchema = z.object({
   stock_actual: z.coerce.number().int().min(0, 'Stock inválido'),
   stock_min: z.coerce.number().int().min(0, 'Stock inválido'),
   is_active: z.boolean().default(true),
+  image_url: z.string().optional(),
 });
 
 type ProductFormData = z.infer<typeof ProductSchema>;
@@ -32,8 +34,11 @@ interface ProductModalProps {
 export function ProductModal({ product, isOpen, onClose, onSuccess }: ProductModalProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isPending, startTransition] = useTransition();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductFormData>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ProductFormData>({
     resolver: zodResolver(ProductSchema),
   });
 
@@ -54,7 +59,9 @@ export function ProductModal({ product, isOpen, onClose, onSuccess }: ProductMod
           stock_actual: product.stock_actual,
           stock_min: product.stock_min,
           is_active: product.is_active,
+          image_url: product.image_url || '',
         });
+        setImagePreview(product.image_url || null);
       } else {
         reset({
           name: '',
@@ -65,24 +72,69 @@ export function ProductModal({ product, isOpen, onClose, onSuccess }: ProductMod
           stock_actual: 0,
           stock_min: 0,
           is_active: true,
+          image_url: '',
         });
+        setImagePreview(null);
       }
+      setImageFile(null);
     }
   }, [isOpen, product, reset]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (file: File) => {
+    const supabase = await createClient();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { error: uploadError, data } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file);
+
+    if (uploadError) throw new Error(uploadError.message);
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
 
   if (!isOpen) return null;
 
   const onSubmit = (formData: ProductFormData) => {
     startTransition(async () => {
-      const result = product 
-        ? await updateProduct(product.id, formData)
-        : await createProduct(formData);
+      try {
+        let finalImageUrl = formData.image_url;
 
-      if (result.error) {
-        alert(result.error);
-      } else {
-        onSuccess();
-        onClose();
+        // Si hay un nuevo archivo seleccionado, lo subimos
+        if (imageFile) {
+          finalImageUrl = await uploadImage(imageFile);
+        }
+
+        const result = product 
+          ? await updateProduct(product.id, { ...formData, image_url: finalImageUrl })
+          : await createProduct({ ...formData, image_url: finalImageUrl });
+
+        if (result.error) {
+          alert(result.error);
+        } else {
+          onSuccess();
+          onClose();
+        }
+      } catch (error: any) {
+        alert("Error al subir la imagen: " + (error.message || "Error desconocido"));
       }
     });
   };
@@ -99,7 +151,50 @@ export function ProductModal({ product, isOpen, onClose, onSuccess }: ProductMod
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-8 overflow-y-auto space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-8 overflow-y-auto space-y-8">
+          {/* Image Upload Area */}
+          <div className="flex flex-col items-center justify-center">
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="relative group w-48 h-48 rounded-[40px] border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all overflow-hidden"
+            >
+              {imagePreview ? (
+                <>
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <ImagePlus className="w-10 h-10 text-white" />
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-primary transition-colors">
+                  <ImagePlus className="w-12 h-12" />
+                  <span className="text-xs font-bold uppercase tracking-widest">Añadir Foto</span>
+                </div>
+              )}
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleImageChange} 
+                className="hidden" 
+                accept="image/*" 
+              />
+            </div>
+            {imagePreview && (
+              <button 
+                type="button"
+                onClick={() => {
+                  setImagePreview(null);
+                  setImageFile(null);
+                  setValue('image_url', '');
+                }}
+                className="mt-3 flex items-center gap-1.5 text-xs font-bold text-red-500 uppercase tracking-widest hover:bg-red-50 px-3 py-1.5 rounded-full transition-all"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Eliminar
+              </button>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Nombre</label>
@@ -137,8 +232,8 @@ export function ProductModal({ product, isOpen, onClose, onSuccess }: ProductMod
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Estado</label>
               <div className="flex items-center gap-4 py-3">
-                <input type="checkbox" {...register('is_active')} id="is_active" className="w-5 h-5 accent-primary" />
-                <label htmlFor="is_active" className="text-sm font-bold text-text-main">Activo para venta</label>
+                <input type="checkbox" {...register('is_active')} id="is_active" className="w-5 h-5 accent-primary cursor-pointer" />
+                <label htmlFor="is_active" className="text-sm font-bold text-text-main cursor-pointer select-none">Activo para venta</label>
               </div>
             </div>
           </div>
@@ -146,19 +241,25 @@ export function ProductModal({ product, isOpen, onClose, onSuccess }: ProductMod
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Compra</label>
-              <input 
-                {...register('purchase_price')} 
-                type="number" step="0.01"
-                className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-primary transition-all font-bold outline-none"
-              />
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                <input 
+                  {...register('purchase_price')} 
+                  type="number" step="0.01"
+                  className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-primary transition-all font-bold outline-none"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Venta</label>
-              <input 
-                {...register('sale_price')} 
-                type="number" step="0.01"
-                className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-primary transition-all font-bold outline-none"
-              />
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                <input 
+                  {...register('sale_price')} 
+                  type="number" step="0.01"
+                  className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-primary transition-all font-bold outline-none"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Stock Actual</label>
@@ -183,7 +284,7 @@ export function ProductModal({ product, isOpen, onClose, onSuccess }: ProductMod
           <button 
             type="button"
             onClick={onClose}
-            className="flex-1 py-4 bg-white border border-gray-200 text-text-secondary rounded-2xl font-bold hover:bg-gray-100 transition-all"
+            className="flex-1 py-4 bg-white border border-gray-200 text-text-secondary rounded-2xl font-bold hover:bg-gray-100 transition-all font-semibold"
           >
             Cancelar
           </button>
@@ -191,7 +292,7 @@ export function ProductModal({ product, isOpen, onClose, onSuccess }: ProductMod
             type="button"
             onClick={handleSubmit(onSubmit)}
             disabled={isPending}
-            className="flex-[2] py-4 bg-primary text-background-dark rounded-2xl font-black text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="flex-[2] py-4 bg-primary text-background-dark rounded-2xl font-black text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all flex items-center justify-center gap-2"
           >
             {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : (
               <>

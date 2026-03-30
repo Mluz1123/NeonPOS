@@ -3,6 +3,9 @@
 import { Settings, User, Bell, Shield, Database, Palette, HelpCircle, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { ProfileSection } from '@/components/settings/ProfileSection';
+import { AppearanceSection } from '@/components/settings/AppearanceSection';
+import { NotificationsSection } from '@/components/settings/NotificationsSection';
+import { SecuritySection } from '@/components/settings/SecuritySection';
 import { ComingSoon } from '@/components/settings/ComingSoon';
 import { cn } from '@/lib/utils';
 
@@ -20,10 +23,16 @@ export default function SettingsPage() {
 
   const renderSection = () => {
     const section = settingsSections.find(s => s.id === activeSection);
-    
+
     switch (activeSection) {
       case 'profile':
         return <ProfileSection />;
+      case 'appearance':
+        return <AppearanceSection />;
+      case 'notifications':
+        return <NotificationsSection />;
+      case 'security':
+        return <SecuritySection />;
       case null:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -77,7 +86,7 @@ export default function SettingsPage() {
         </div>
 
         {!activeSection && (
-          <div className="flex items-center gap-3 p-2 bg-background-dark rounded-[24px] pr-6 shadow-xl shadow-gray-200 group hover:scale-[1.02] transition-all">
+          <div className="flex items-center gap-3 p-2 bg-background-dark rounded-[24px] pr-6 shadow-xl group hover:scale-[1.02] transition-all">
             <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center overflow-hidden border border-white/10">
               <div className="w-6 h-6 bg-primary rounded-full animate-pulse shadow-[0_0_15px_rgba(158,255,0,0.5)]" />
             </div>

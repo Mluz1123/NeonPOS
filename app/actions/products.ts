@@ -14,6 +14,7 @@ const ProductSchema = z.object({
   stock_actual: z.coerce.number().int().min(0, 'Stock inválido'),
   stock_min: z.coerce.number().int().min(0, 'Stock inválido'),
   is_active: z.boolean().default(true),
+  image_url: z.string().url('URL de imagen inválida').optional().or(z.literal('')),
 });
 
 type ActionResult<T> = { data: T; error: null } | { data: null; error: string };
@@ -68,12 +69,31 @@ export async function updateProduct(id: string, formData: z.infer<typeof Product
 
 export async function deleteProduct(id: string): Promise<ActionResult<null>> {
   const supabase = await createClient();
+  
+  // Try to delete physically
   const { error } = await supabase
     .from('products')
     .delete()
     .eq('id', id);
 
-  if (error) return { data: null, error: error.message };
+  if (error) {
+    // If it's a FK constraint violation (code 23503)
+    // It means the product is referenced in sales, movements, etc.
+    if (error.code === '23503') {
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ is_active: false })
+        .eq('id', id);
+        
+      if (updateError) return { data: null, error: updateError.message };
+      
+      revalidatePath('/inventory');
+      revalidatePath('/pos');
+      // We return null error but maybe we want to notify it was archived
+      return { data: null, error: null }; 
+    }
+    return { data: null, error: error.message };
+  }
   
   revalidatePath('/inventory');
   revalidatePath('/pos');

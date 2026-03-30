@@ -9,17 +9,19 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#9EFF00",
-          dark: "#82D100",
+          DEFAULT: "var(--primary)",
+          dark: "var(--primary-dark)",
         },
         background: {
-          dark: "#0B0B0B",
-          light: "#F5F6F7",
+          dark: "var(--sidebar)",
+          light: "var(--background)",
         },
         text: {
-          main: "#1F2933",
-          secondary: "#6B7280",
-        }
+          main: "var(--text-main)",
+          secondary: "var(--text-secondary)",
+        },
+        borderBase: "var(--border)",
+        cardBase: "var(--card)",
       },
       borderRadius: {
         'xl': '0.75rem',

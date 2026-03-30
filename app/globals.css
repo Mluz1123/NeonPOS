@@ -5,11 +5,29 @@
 :root {
   --background: #F5F6F7;
   --foreground: #1F2933;
+  --primary: #9EFF00;
+  --primary-dark: #82D100;
+  --sidebar: #0B0B0B;
+  --card: #FFFFFF;
+  --border: #F3F4F6;
+  --text-main: #1F2933;
+  --text-secondary: #6B7280;
+}
+
+[data-theme='dark'] {
+  --background: #0B0B0B;
+  --foreground: #F5F6F7;
+  --sidebar: #151515;
+  --card: #1C1C1C;
+  --border: #2D2D2D;
+  --text-main: var(--primary);
+  --text-secondary: #9CA3AF;
 }
 
 body {
   background-color: var(--background);
-  color: var(--foreground);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .dark-sidebar {
@@ -18,13 +36,16 @@ body {
 }
 
 .neon-button {
-  background-color: #9EFF00;
+  background-color: var(--primary);
   color: #0B0B0B;
   font-weight: 600;
   transition: all 0.2s ease;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .neon-button:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background-color: var(--primary-dark);
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }

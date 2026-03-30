@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, ShoppingCart, Package, ArrowLeftRight, Calculator, BarChart3, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, ArrowLeftRight, Calculator, BarChart3, Settings, LogOut, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -48,14 +48,26 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 mt-auto border-t border-white/10">
+      <div className="p-4 mt-auto border-t border-white/10 space-y-2">
+        <button 
+          onClick={() => {
+            import('@/stores/useAuthStore').then(({ useAuthStore }) => {
+              useAuthStore.getState().logout();
+            });
+          }}
+          className="flex items-center gap-3 px-4 py-3 w-full text-gray-400 hover:text-yellow-400 transition-colors group rounded-xl hover:bg-white/5"
+        >
+          <Lock className="w-5 h-5 group-hover:text-yellow-400" />
+          Bloquear Terminal
+        </button>
+
         <form action="/auth/signout" method="post">
           <button 
             type="submit"
-            className="flex items-center gap-3 px-4 py-3 w-full text-gray-400 hover:text-red-400 transition-colors group"
+            className="flex items-center gap-3 px-4 py-3 w-full text-gray-400 hover:text-red-400 transition-colors group rounded-xl hover:bg-white/5"
           >
             <LogOut className="w-5 h-5 group-hover:text-red-400" />
-            Cerrar Sesión
+            Cerrar Sesión Negocio
           </button>
         </form>
       </div>

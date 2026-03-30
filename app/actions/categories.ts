@@ -37,6 +37,7 @@ export async function createCategory(formData: z.infer<typeof CategorySchema>): 
   if (error) return { data: null, error: error.message };
   
   revalidatePath('/inventory');
+  revalidatePath('/pos');
   return { data, error: null };
 }
 
@@ -55,6 +56,7 @@ export async function updateCategory(id: string, formData: z.infer<typeof Catego
   if (error) return { data: null, error: error.message };
   
   revalidatePath('/inventory');
+  revalidatePath('/pos');
   return { data, error: null };
 }
 
@@ -71,5 +73,6 @@ export async function deleteCategory(id: string): Promise<ActionResult<null>> {
   }
   
   revalidatePath('/inventory');
+  revalidatePath('/pos');
   return { data: null, error: null };
 }

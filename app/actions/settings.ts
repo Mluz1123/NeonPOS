@@ -12,6 +12,17 @@ export interface BusinessSettings {
   email: string | null;
   footer_text: string | null;
   logo_url: string | null;
+  theme_mode?: 'light' | 'dark' | 'system';
+  primary_color?: string;
+  notify_low_stock?: boolean;
+  notify_cash_closure?: boolean;
+  notification_email?: string | null;
+  stock_alert_threshold?: number;
+  role_permissions?: {
+    [role: string]: {
+      [permission: string]: boolean;
+    };
+  };
 }
 
 type ActionResult<T> = { data: T; error: null } | { data: null; error: string };
@@ -43,6 +54,30 @@ export async function getBusinessSettings(): Promise<ActionResult<BusinessSettin
         email: '',
         footer_text: '',
         logo_url: '',
+        theme_mode: 'light',
+        primary_color: '#9EFF00',
+        notify_low_stock: true,
+        notify_cash_closure: true,
+        notification_email: '',
+        stock_alert_threshold: 5,
+        role_permissions: {
+          manager: {
+            manage_products: true,
+            manage_staff: false,
+            view_reports: true,
+            close_cash: true,
+            manage_discounts: true,
+            manage_settings: false
+          },
+          cashier: {
+            manage_products: false,
+            manage_staff: false,
+            view_reports: false,
+            close_cash: false,
+            manage_discounts: false,
+            manage_settings: false
+          }
+        }
       },
       error: null
     };

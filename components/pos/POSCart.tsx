@@ -1,7 +1,7 @@
 'use client';
 
 import { usePOSStore } from '@/stores/usePOSStore';
-import { Trash2, Minus, Plus, CreditCard, Banknote, Landmark, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Trash2, Minus, Plus, CreditCard, Banknote, Landmark, Loader2, AlertCircle, CheckCircle2, Package } from 'lucide-react';
 import { useState, useEffect, useTransition } from 'react';
 import { createSale } from '@/app/actions/sales';
 import { getCurrentCashRegister } from '@/app/actions/cash';
@@ -88,8 +88,15 @@ export function POSCart() {
 
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {activeTab.items.map((item) => (
-          <div key={item.product_id} className="flex items-center gap-4 group">
-            <div className="flex-1">
+          <div key={item.product_id} className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-transparent hover:border-gray-100 transition-all group">
+            <div className="w-12 h-12 rounded-xl bg-gray-50 flex-shrink-0 flex items-center justify-center text-gray-400 overflow-hidden border border-gray-100">
+              {item.product?.image_url ? (
+                <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />
+              ) : (
+                <Package className="w-5 h-5" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
               <p className="font-semibold text-text-main line-clamp-1">{item.product?.name}</p>
               <p className="text-sm text-text-secondary">${Number(item.unit_price).toFixed(2)} c/u</p>
             </div>
