@@ -14,6 +14,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
 
   return (
     <html lang="es" suppressHydrationWarning>
+      <head />
       <body suppressHydrationWarning className="bg-background-light text-text-main">
         <ThemeManager 
           themeMode={settings?.theme_mode} 
