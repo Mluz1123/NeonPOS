@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { CashRegister, CashMovement } from '@/types';
+import { CashMovementSchema } from '@/lib/schemas';
 
 type ActionResult<T> = { data: T; error: null } | { data: null; error: string };
 
@@ -107,12 +108,6 @@ export async function getCashMovements(cashRegisterId: string): Promise<ActionRe
   return { data: data as any, error: null };
 }
 
-export const CashMovementSchema = z.object({
-  cash_register_id: z.string().uuid('Caja registradora inválida'),
-  type: z.enum(['income', 'expense'], { errorMap: () => ({ message: 'Tipo de movimiento inválido' }) }),
-  amount: z.coerce.number().min(0.01, 'El monto debe ser mayor a cero'),
-  reason: z.string().min(3, 'La razón debe tener al menos 3 caracteres'),
-});
 
 export async function createCashMovement(params: z.infer<typeof CashMovementSchema>): Promise<ActionResult<CashMovement>> {
   const parsed = CashMovementSchema.safeParse(params);

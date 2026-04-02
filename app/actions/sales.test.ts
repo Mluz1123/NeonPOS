@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SaleSchema } from './sales';
+import { SaleSchema } from '@/lib/schemas';
 
 describe('SaleSchema validation', () => {
   const validSale = {

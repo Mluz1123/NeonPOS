@@ -9,18 +9,8 @@ import { createProduct, updateProduct } from '@/app/actions/products';
 import { useTransition, useEffect, useState, useRef } from 'react';
 import { getCategories } from '@/app/actions/categories';
 import { createClient } from '@/lib/supabase/client';
+import { ProductSchema } from '@/lib/schemas';
 
-const ProductSchema = z.object({
-  name: z.string().min(1, 'Nombre requerido'),
-  barcode: z.string().optional(),
-  category_id: z.string().uuid('Categoría inválida'),
-  purchase_price: z.coerce.number().min(0, 'Precio inválido'),
-  sale_price: z.coerce.number().min(0, 'Precio inválido'),
-  stock_actual: z.coerce.number().int().min(0, 'Stock inválido'),
-  stock_min: z.coerce.number().int().min(0, 'Stock inválido'),
-  is_active: z.boolean().default(true),
-  image_url: z.string().optional(),
-});
 
 type ProductFormData = z.infer<typeof ProductSchema>;
 

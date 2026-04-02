@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CashMovementSchema } from './cash';
+import { CashMovementSchema } from '@/lib/schemas';
 
 describe('CashMovementSchema validation', () => {
   const validMovement = {

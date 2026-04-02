@@ -4,22 +4,10 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { Sale, SaleItem } from '@/types';
+import { SaleSchema } from '@/lib/schemas';
 
 type ActionResult<T> = { data: T; error: null } | { data: null; error: string };
 
-export const SaleSchema = z.object({
-  cash_register_id: z.string().uuid('Caja registradora inválida'),
-  total_amount: z.coerce.number().min(0, 'Monto inválido'),
-  tax_amount: z.coerce.number().min(0, 'Impuesto inválido'),
-  payment_method: z.enum(['cash', 'card', 'transfer'], { errorMap: () => ({ message: 'Método de pago inválido' }) }),
-  customer_name: z.string().optional(),
-  items: z.array(z.object({
-    product_id: z.string().uuid('Producto inválido'),
-    quantity: z.coerce.number().int().min(1, 'La cantidad debe ser al menos 1'),
-    unit_price: z.coerce.number().min(0, 'Precio unitario inválido'),
-    subtotal: z.coerce.number().min(0, 'Subtotal inválido'),
-  })).min(1, 'El carrito está vacío'),
-});
 
 export async function createSale(params: z.infer<typeof SaleSchema>): Promise<ActionResult<Sale>> {
   const parsed = SaleSchema.safeParse(params);
