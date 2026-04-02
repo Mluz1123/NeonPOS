@@ -95,8 +95,39 @@ ALTER TABLE cash_movements ENABLE ROW LEVEL SECURITY;
 -- Baseline Policy: Only Authenticated Users Can Access/Mutate
 CREATE POLICY "Enable ALL for authenticated users only" ON categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Enable ALL for authenticated users only" ON products FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Enable ALL for authenticated users only" ON cash_registers FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Enable ALL for authenticated users only" ON sales FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Enable ALL for authenticated users only" ON sale_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Enable ALL for authenticated users only" ON inventory_movements FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Enable ALL for authenticated users only" ON cash_movements FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Cash registers: user-specific
+CREATE POLICY "Users can only see their own cash registers"
+  ON cash_registers FOR SELECT TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only create their own cash registers"
+  ON cash_registers FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can only update their own cash registers"
+  ON cash_registers FOR UPDATE TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Triggers
+CREATE OR REPLACE FUNCTION decrease_stock_on_sale()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE products
+  SET stock_actual = stock_actual - NEW.quantity
+  WHERE id = NEW.product_id;
+  
+  INSERT INTO inventory_movements (product_id, type, quantity, reason)
+  VALUES (NEW.product_id, 'sale', -NEW.quantity, 'Venta automática');
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_sale_item_created
+  AFTER INSERT ON sale_items
+  FOR EACH ROW EXECUTE FUNCTION decrease_stock_on_sale();
