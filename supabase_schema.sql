@@ -82,3 +82,21 @@ CREATE TABLE cash_movements (
 CREATE INDEX idx_products_barcode ON products(barcode);
 CREATE INDEX idx_sales_created_at ON sales(created_at);
 CREATE INDEX idx_inventory_movements_product ON inventory_movements(product_id);
+
+-- Enforce Row Level Security (RLS)
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cash_registers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sale_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inventory_movements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cash_movements ENABLE ROW LEVEL SECURITY;
+
+-- Baseline Policy: Only Authenticated Users Can Access/Mutate
+CREATE POLICY "Enable ALL for authenticated users only" ON categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Enable ALL for authenticated users only" ON products FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Enable ALL for authenticated users only" ON cash_registers FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Enable ALL for authenticated users only" ON sales FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Enable ALL for authenticated users only" ON sale_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Enable ALL for authenticated users only" ON inventory_movements FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Enable ALL for authenticated users only" ON cash_movements FOR ALL TO authenticated USING (true) WITH CHECK (true);

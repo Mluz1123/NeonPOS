@@ -20,11 +20,18 @@ const menuItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close sidebar when route changes
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
+
+  if (!mounted) return null;
 
   return (
     <>

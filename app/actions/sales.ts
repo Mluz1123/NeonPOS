@@ -7,17 +7,17 @@ import { Sale, SaleItem } from '@/types';
 
 type ActionResult<T> = { data: T; error: null } | { data: null; error: string };
 
-const SaleSchema = z.object({
-  cash_register_id: z.string().uuid(),
-  total_amount: z.number().min(0),
-  tax_amount: z.number().min(0),
-  payment_method: z.enum(['cash', 'card', 'transfer']),
+export const SaleSchema = z.object({
+  cash_register_id: z.string().uuid('Caja registradora inválida'),
+  total_amount: z.coerce.number().min(0, 'Monto inválido'),
+  tax_amount: z.coerce.number().min(0, 'Impuesto inválido'),
+  payment_method: z.enum(['cash', 'card', 'transfer'], { errorMap: () => ({ message: 'Método de pago inválido' }) }),
   customer_name: z.string().optional(),
   items: z.array(z.object({
-    product_id: z.string().uuid(),
-    quantity: z.number().int().min(1),
-    unit_price: z.number().min(0),
-    subtotal: z.number().min(0),
+    product_id: z.string().uuid('Producto inválido'),
+    quantity: z.coerce.number().int().min(1, 'La cantidad debe ser al menos 1'),
+    unit_price: z.coerce.number().min(0, 'Precio unitario inválido'),
+    subtotal: z.coerce.number().min(0, 'Subtotal inválido'),
   })).min(1, 'El carrito está vacío'),
 });
 
@@ -26,6 +26,11 @@ export async function createSale(params: z.infer<typeof SaleSchema>): Promise<Ac
   if (!parsed.success) return { data: null, error: parsed.error.errors[0].message };
 
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { data: null, error: 'No autorizado.' };
+  }
 
   // 1. Verify Cash Register is OPEN
   const { data: cashReg, error: cashError } = await supabase

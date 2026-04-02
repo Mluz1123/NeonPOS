@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { Product } from '@/types';
 
-const ProductSchema = z.object({
+export const ProductSchema = z.object({
   name: z.string().min(1, 'Nombre requerido'),
   barcode: z.string().optional(),
   category_id: z.string().uuid('Categoría inválida'),

@@ -13,7 +13,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
   const { data: settings } = await getBusinessSettings();
 
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body suppressHydrationWarning className="bg-background-light text-text-main">
         <ThemeManager 
           themeMode={settings?.theme_mode} 

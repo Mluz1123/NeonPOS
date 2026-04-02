@@ -107,7 +107,17 @@ export async function getCashMovements(cashRegisterId: string): Promise<ActionRe
   return { data: data as any, error: null };
 }
 
-export async function createCashMovement(params: { cash_register_id: string; type: 'income' | 'expense'; amount: number; reason: string }): Promise<ActionResult<CashMovement>> {
+export const CashMovementSchema = z.object({
+  cash_register_id: z.string().uuid('Caja registradora inválida'),
+  type: z.enum(['income', 'expense'], { errorMap: () => ({ message: 'Tipo de movimiento inválido' }) }),
+  amount: z.coerce.number().min(0.01, 'El monto debe ser mayor a cero'),
+  reason: z.string().min(3, 'La razón debe tener al menos 3 caracteres'),
+});
+
+export async function createCashMovement(params: z.infer<typeof CashMovementSchema>): Promise<ActionResult<CashMovement>> {
+  const parsed = CashMovementSchema.safeParse(params);
+  if (!parsed.success) return { data: null, error: parsed.error.errors[0].message };
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('cash_movements')
